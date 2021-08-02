@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2019 Ha Thach (tinyusb.org)
@@ -28,8 +28,10 @@
 
 #if (TUSB_OPT_DEVICE_ENABLED && CFG_TUD_VENDOR)
 
-#include "vendor_device.h"
+#include "device/usbd.h"
 #include "device/usbd_pvt.h"
+
+#include "vendor_device.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF
@@ -72,9 +74,9 @@ uint32_t tud_vendor_n_available (uint8_t itf)
   return tu_fifo_count(&_vendord_itf[itf].rx_ff);
 }
 
-bool tud_vendor_n_peek(uint8_t itf, int pos, uint8_t* u8)
+bool tud_vendor_n_peek(uint8_t itf, uint8_t* u8)
 {
-  return tu_fifo_peek_at(&_vendord_itf[itf].rx_ff, pos, u8);
+  return tu_fifo_peek(&_vendord_itf[itf].rx_ff, u8);
 }
 
 //--------------------------------------------------------------------+
@@ -146,8 +148,8 @@ void vendord_init(void)
     tu_fifo_config(&p_itf->tx_ff, p_itf->tx_ff_buf, CFG_TUD_VENDOR_TX_BUFSIZE, 1, false);
 
 #if CFG_FIFO_MUTEX
-    tu_fifo_config_mutex(&p_itf->rx_ff, osal_mutex_create(&p_itf->rx_ff_mutex));
-    tu_fifo_config_mutex(&p_itf->tx_ff, osal_mutex_create(&p_itf->tx_ff_mutex));
+    tu_fifo_config_mutex(&p_itf->rx_ff, NULL, osal_mutex_create(&p_itf->rx_ff_mutex));
+    tu_fifo_config_mutex(&p_itf->tx_ff, osal_mutex_create(&p_itf->tx_ff_mutex), NULL);
 #endif
   }
 }
@@ -193,7 +195,7 @@ uint16_t vendord_open(uint8_t rhport, tusb_desc_interface_t const * itf_desc, ui
   // Prepare for incoming data
   if ( !usbd_edpt_xfer(rhport, p_vendor->ep_out, p_vendor->epout_buf, sizeof(p_vendor->epout_buf)) )
   {
-    TU_LOG1_FAILED();
+    TU_LOG_FAILED();
     TU_BREAKPOINT();
   }
 

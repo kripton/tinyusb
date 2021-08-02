@@ -1,15 +1,43 @@
-# The following five lines of boilerplate have to be in your project's
-# CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
-# TOP is absolute path to root directory of TinyUSB git repo
-set(TOP "../../..")
-get_filename_component(TOP "${TOP}" REALPATH)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../hw/bsp/${FAMILY}/family.cmake)
 
-# Add example src and bsp directories
-set(EXTRA_COMPONENT_DIRS "src" "${TOP}/hw/bsp/${BOARD}")
+# Check for -DFAMILY=
+if(FAMILY MATCHES "^esp32s[2-3]")
+  # use BOARD-Directory name for project id
+  get_filename_component(PROJECT ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+  set(PROJECT ${BOARD}-${PROJECT})
 
-include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-set(SUPPORTED_TARGETS esp32s2)
+  # TOP is absolute path to root directory of TinyUSB git repo
+  set(TOP "../../..")
+  get_filename_component(TOP "${TOP}" REALPATH)
 
-project(board_test)
+  include(${TOP}/hw/bsp/${FAMILY}/family.cmake)
+  project(${PROJECT})
+
+else()
+
+  # gets PROJECT name for the example (e.g. <BOARD>-<DIR_NAME>)
+  family_get_project_name(PROJECT ${CMAKE_CURRENT_LIST_DIR})
+
+  project(${PROJECT})
+
+  # Checks this example is valid for the family and initializes the project
+  family_initialize_project(${PROJECT} ${CMAKE_CURRENT_LIST_DIR})
+
+  add_executable(${PROJECT})
+
+  # Example source
+  target_sources(${PROJECT} PUBLIC
+          ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+          )
+
+  # Example include
+  target_include_directories(${PROJECT} PUBLIC
+          ${CMAKE_CURRENT_SOURCE_DIR}/src
+          )
+
+  # Configure compilation flags and libraries for the example... see the corresponding function
+  # in hw/bsp/FAMILY/family.cmake for details.
+  family_configure_device_example(${PROJECT})
+endif()

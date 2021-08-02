@@ -50,7 +50,7 @@ typedef struct
 static usbh_control_xfer_t _ctrl_xfer;
 
 //CFG_TUSB_MEM_SECTION CFG_TUSB_MEM_ALIGN
-//static uint8_t _tuh_ctrl_buf[CFG_TUSB_HOST_ENUM_BUFFER_SIZE];
+//static uint8_t _tuh_ctrl_buf[CFG_TUH_ENUMERATION_BUFSZIE];
 
 //--------------------------------------------------------------------+
 // MACRO TYPEDEF CONSTANT ENUM DECLARATION
@@ -80,6 +80,7 @@ bool tuh_control_xfer (uint8_t dev_addr, tusb_control_request_t const* request, 
 
 static void _xfer_complete(uint8_t dev_addr, xfer_result_t result)
 {
+  TU_LOG2("\r\n");
   if (_ctrl_xfer.complete_cb) _ctrl_xfer.complete_cb(dev_addr, &_ctrl_xfer.request, result);
 }
 
@@ -107,7 +108,7 @@ bool usbh_control_xfer_cb (uint8_t dev_addr, uint8_t ep_addr, xfer_result_t resu
         _ctrl_xfer.stage = STAGE_DATA;
         if (request->wLength)
         {
-          // Note: initial data toggle is always 1
+          // DATA stage: initial data toggle is always 1
           hcd_edpt_xfer(rhport, dev_addr, tu_edpt_addr(0, request->bmRequestType_bit.direction), _ctrl_xfer.buffer, request->wLength);
           return true;
         }
@@ -122,7 +123,7 @@ bool usbh_control_xfer_cb (uint8_t dev_addr, uint8_t ep_addr, xfer_result_t resu
           TU_LOG2_MEM(_ctrl_xfer.buffer, request->wLength, 2);
         }
 
-        // data toggle is always 1
+        // ACK stage: toggle is always 1
         hcd_edpt_xfer(rhport, dev_addr, tu_edpt_addr(0, 1-request->bmRequestType_bit.direction), NULL, 0);
       break;
 

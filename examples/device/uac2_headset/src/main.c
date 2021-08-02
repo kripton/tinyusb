@@ -34,6 +34,10 @@
 // MACRO CONSTANT TYPEDEF PROTOTYPES
 //--------------------------------------------------------------------+
 
+#ifndef AUDIO_SAMPLE_RATE
+#define AUDIO_SAMPLE_RATE     48000
+#endif
+
 /* Blink pattern
  * - 25 ms   : streaming data
  * - 250 ms  : device not mounted
@@ -68,8 +72,8 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 // Audio controls
 // Current states
-int8_t mute[CFG_TUD_AUDIO_N_CHANNELS_TX + 1];       // +1 for master channel 0
-int16_t volume[CFG_TUD_AUDIO_N_CHANNELS_TX + 1];    // +1 for master channel 0
+int8_t mute[CFG_TUD_AUDIO_FUNC_1_N_CHANNELS_TX + 1];       // +1 for master channel 0
+int16_t volume[CFG_TUD_AUDIO_FUNC_1_N_CHANNELS_TX + 1];    // +1 for master channel 0
 
 // Buffer for microphone data
 int16_t mic_buf[1000];
@@ -145,7 +149,7 @@ typedef struct TU_ATTR_PACKED
     uint8_t bmRequestType;
   };
 
-  audio_cs_req_t bRequest;
+  uint8_t bRequest;  ///< Request type audio_cs_req_t
   uint8_t bChannelNumber;
   uint8_t bControlSelector;
   union
@@ -328,13 +332,14 @@ bool tud_audio_set_itf_cb(uint8_t rhport, tusb_control_request_t const * p_reque
   return true;
 }
 
-bool tud_audio_rx_done_cb(uint8_t rhport, uint8_t *buffer, uint16_t buf_size)
+bool tud_audio_rx_done_pre_read_cb(uint8_t rhport, uint16_t n_bytes_received, uint8_t func_id, uint8_t ep_out, uint8_t cur_alt_setting)
 {
   (void)rhport;
+  (void)func_id;
+  (void)ep_out;
+  (void)cur_alt_setting;
 
-  spk_data_size = buf_size;
-  memcpy(spk_buf, buffer, buf_size);
-
+  spk_data_size = tud_audio_read(spk_buf, n_bytes_received);
   return true;
 }
 
