@@ -65,6 +65,7 @@ if (NOT TARGET _rp2040_family_inclusion_marker)
 			${TOP}/src/device/usbd_control.c
 			${TOP}/src/class/audio/audio_device.c
 			${TOP}/src/class/cdc/cdc_device.c
+			${TOP}/src/class/cdc/cdc_ncm_device.c
 			${TOP}/src/class/dfu/dfu_device.c
 			${TOP}/src/class/dfu/dfu_rt_device.c
 			${TOP}/src/class/hid/hid_device.c
